@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, UpdateResult } from 'typeorm';
 import { RevenueDto } from 'src/revenues/dto/RevenueDto';
 import { Revenue } from './entities/revenue.entity';
 import { Repository } from 'typeorm';
@@ -53,7 +53,12 @@ export class RevenuesService {
         throw new NotFoundException();
       }
 
-      const updatedBalance = this.applyInBalance(user.balance, value, type);
+      const updatedBalance = this.applyInBalance(
+        user.balance,
+        value,
+        type,
+        'upsert',
+      );
 
       if (updatedBalance < 0) {
         throw new BadRequestException();
@@ -81,8 +86,29 @@ export class RevenuesService {
 
   async deleteRevenue(id: string, userId: string): Promise<RevenueResponseDto> {
     let revenue = await this.revenuesRepository.findOneBy({ id: id });
+    const user = await this.userService.getUser(userId);
 
-    if (revenue) {
+    if (!user) {
+      throw new UnauthorizedException()
+    }
+
+    if (revenue && user) {
+      const balanceAfterDelete = this.applyInBalance(
+        user.balance,
+        revenue.value,
+        revenue.type,
+        'delete',
+      );
+
+      if (balanceAfterDelete < 0) {
+        throw new BadRequestException()
+      }
+
+      this.userService.updateUser(userId, {
+        ...user,
+        balance: balanceAfterDelete,
+      });
+
       await this.revenuesRepository.delete({ id: id });
       return { data: revenue, msg: 'Deleted with success' };
     }
@@ -95,18 +121,27 @@ export class RevenuesService {
     userId: string,
     data: UpdateRevenueDto,
   ): Promise<RevenueResponseDto> {
-    if (data.type != undefined && typeof data.value != undefined) {
-      return await this.dataSource.transaction(async (manager) => {
-        const user = await this.userService.getUser(userId);
+    return await this.dataSource.transaction(async (manager) => {
+      const user = await this.userService.getUser(userId);
+      const oldRevenue = await this.getOne({ id });
 
-        if (!user) {
-          throw new UnauthorizedException();
-        }
+      if (!oldRevenue.data) {
+        throw new BadRequestException();
+      }
 
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      if (data.type || data.value ) {
+        //retornando o valor do usuário antes do upsert da receita
+        const currentBalance = oldRevenue.data.type === "in" ? user.balance - oldRevenue.data.value : user.balance + oldRevenue.data.value
+        //atualiza de fato o valor antes do upsert
         const updatedBalance = this.applyInBalance(
-          user.balance,
-          data.value!,
-          data.type!,
+          currentBalance,
+          data.value ?? oldRevenue.data.value,
+          data.type ?? oldRevenue.data.type,
+          'upsert',
         );
 
         if (updatedBalance < 0) {
@@ -118,36 +153,35 @@ export class RevenuesService {
           balance: updatedBalance,
         });
 
-        const updatedUser = await manager.save(toUpdateUser);
+        await manager.save(toUpdateUser);
+      }
 
-        const oldRevenue = await this.getOne({ id });
+      await this.revenuesRepository.update(id, data);
+      const revenue = (await this.getOne({ id })).data;
 
-        const toUpdateRevenue = { ...oldRevenue, data };
-
-        const updatedRevenue = manager.create(Revenue, {
-          toUpdateRevenue,
-          user: updatedUser,
-        });
-
-        const revenue = await manager.save(updatedRevenue);
-
-        return { data: revenue, msg: 'Updated with success!' };
-      });
-    }
-
-    await this.revenuesRepository.update(id, data);
-    let updatedRevenue = await this.revenuesRepository.findOneBy({ id: id });
-    if (!this.updateRevenue) {
-      throw new NotFoundException();
-    }
-    return { data: updatedRevenue, msg: 'Updated with success!' };
+      return { data: revenue, msg: 'Updated with success!' };
+    });
   }
 
-  applyInBalance(balance: number, value: number, type: 'in' | 'out'): number {
-    if (type == 'out') {
-      return balance - value;
+  applyInBalance(
+    balance: number,
+    value: number,
+    type: 'in' | 'out',
+    operation: 'upsert' | 'delete',
+  ): number {
+    switch (operation) {
+      case 'upsert':
+        if (type == 'out') {
+          return balance - value;
+        }
+        return balance + value;
+        break;
+      case 'delete':
+        if (type == 'out') {
+          return balance + value;
+        }
+        return balance - value;
+        break;
     }
-
-    return balance + value;
   }
 }
