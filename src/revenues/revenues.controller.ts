@@ -30,8 +30,8 @@ export class RevenuesController {
   }
 
   @Get('/:id')
-  getOne(@Param('id') id: string): Promise<RevenueResponseDto>{
-    return this.RevenuesService.getOne({id});
+  getOne(@Param('id') id: string): Promise<RevenueResponseDto> {
+    return this.RevenuesService.getOne({ id });
   }
 
   @Post('/')
@@ -39,23 +39,28 @@ export class RevenuesController {
   //podemos passar a instancia pré definida ou instanciar uma manualmente
   //a utilidade de instanciar uma nova clase de ValidationPipe é personalizar determinados campos
   @UsePipes(ValidationPipe)
-  createRevenue(@Body() data: RevenueDto, @Request() req ): Promise<RevenueResponseDto> {
-
-    return this.RevenuesService.createRevenue(data, req.user.sub)
-
+  createRevenue(
+    @Body() data: RevenueDto,
+    @Request() req,
+  ): Promise<RevenueResponseDto> {
+    return this.RevenuesService.createRevenue(data, req.user.sub);
   }
 
   @Delete('/:id')
-  deleteRevenue(@Param('id') id: string): Promise<RevenueResponseDto>{
-    return this.RevenuesService.deleteRevenue(id);
+  deleteRevenue(
+    @Param('id') id: string,
+    @Request() req,
+  ): Promise<RevenueResponseDto> {
+    return this.RevenuesService.deleteRevenue(id, req.user.sub);
   }
 
   @Put('/:id')
   @UsePipes(ValidationPipe)
   updateRevenue(
     @Param('id') id: string,
+    @Request() req,
     @Body() data: UpdateRevenueDto,
-  ): Promise<RevenueResponseDto>{
-    return this.RevenuesService.updateRevenue(id, data);
+  ): Promise<RevenueResponseDto> {
+    return this.RevenuesService.updateRevenue(id, req.user.sub, data);
   }
 }

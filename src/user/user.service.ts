@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
 import { DeleteResult, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt'
+import { UpdateUserDto } from './dto/UpdateUserDto';
 
 @Injectable()
 export class UserService {
@@ -52,8 +53,8 @@ export class UserService {
     throw new NotFoundException()
   }
 
-  async updateUser(id: string, data: UserDto): Promise<User | null> {
-    this.userRepository.update(id, data)
+  async updateUser(id: string, data: UpdateUserDto): Promise<User | null> {
+    await this.userRepository.update(id, data)
     let updatedUser = this.userRepository.findOneBy({ id: id })
     if (updatedUser) {
       return updatedUser

@@ -3,6 +3,7 @@ import { UserService } from './user.service';
 import { UserDto } from './dto/UserDto';
 import { User } from './entity/user.entity';
 import { DeleteResult } from 'typeorm';
+import { UpdateUserDto } from './dto/UpdateUserDto';
 
 @Controller('user')
 export class UserController {
@@ -37,7 +38,7 @@ export class UserController {
     @UsePipes(ValidationPipe)
     updateRevenue(
       @Param('id') id: string,
-      @Body() data: UserDto,
+      @Body() data: UpdateUserDto,
     ): Promise<User | null>{
       return this.userService.updateUser(id, data);
     }

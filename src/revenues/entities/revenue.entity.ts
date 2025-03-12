@@ -1,6 +1,14 @@
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { User } from 'src/user/entity/user.entity';
-import { Column, Entity, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { ColumnNumericTransformer } from '../../transformers/ColumnNumericTransformer';
 
 @Entity()
 export class Revenue {
@@ -10,13 +18,23 @@ export class Revenue {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ type: 'decimal', scale: 2, precision: 10, transformer: new ColumnNumericTransformer() })
   value: number;
 
   @Column('text', { array: true, nullable: true })
   @IsOptional()
   tags?: string[];
 
+  @Column()
+  @IsString()
+  type: "in" | "out"
+
   @ManyToOne(() => User, (user) => user.revenues, { onDelete: 'CASCADE' })
-  user: User
+  user: User;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  updated_at: Date;
 }

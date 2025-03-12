@@ -8,6 +8,9 @@ export class RevenueDto {
   @NotEquals(0)
   value: number;
 
+  @IsString()
+  type: "in" | "out"
+
   @IsArray()
   @IsOptional()
   tags?: string[];
