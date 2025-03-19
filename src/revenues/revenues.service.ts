@@ -50,7 +50,7 @@ export class RevenuesService {
       const { name, value, type } = revenueDto;
 
       if (!user) {
-        throw new NotFoundException();
+        throw new UnauthorizedException();
       }
 
       const updatedBalance = this.applyInBalance(
@@ -126,7 +126,7 @@ export class RevenuesService {
       const oldRevenue = await this.getOne({ id });
 
       if (!oldRevenue.data) {
-        throw new BadRequestException();
+        throw new NotFoundException();
       }
 
       if (!user) {
