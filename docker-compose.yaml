@@ -5,9 +5,9 @@ services:
     ports:
       - '5433:5432'
     environment:
-      POSTGRESQL_USERNAME: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_DATABASE: moneyger
+      POSTGRESQL_USERNAME: ${DB_USERNAME}
+      POSTGRESQL_PASSWORD: ${DB_PASSWD}
+      POSTGRESQL_DATABASE: ${DB_DATABASE}
     volumes:
       - pgdata:/bitnami/postgresql
 

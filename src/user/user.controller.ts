@@ -9,11 +9,8 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 @Controller('user')
 export class UserController {
 
-  //implementando o service para que seja possível injetar as funções provenientes dele
-  constructor(private readonly userService: UserService){}
+  constructor(private readonly userService: UserService) { }
 
-  //quando declaramos o modulo, automaticamente o nome dele ja é colocado como prefixo da nossa rota
-  //ou seja, para acessarmos esse get precisamos da rota "/user/{user_id}"
   @ApiResponse({ status: 200, description: 'All the users are retrieved with their respective revenues.' })
   @Get("/")
   getUsers () : Promise<User[]> {
