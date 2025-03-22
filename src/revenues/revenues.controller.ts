@@ -29,8 +29,8 @@ export class RevenuesController {
 
   @ApiResponse({ status: 200, description: 'All the revenues are retrieved with their respective user.' })
   @Get('/')
-  getAll(): Promise<Revenue[]> {
-    return this.RevenuesService.getAll();
+  getAll(@Request() request): Promise<Revenue[]> {
+    return this.RevenuesService.getAll(request.user.sub);
   }
 
   @ApiResponse({ status: 200, description: 'The revenue with the specifed ID is retrieved.' })

@@ -10,6 +10,6 @@ import { UserModule } from 'src/user/user.module';
 @Module({
   imports: [TypeOrmModule.forFeature([Revenue, User]), AuthModule, UserModule],
   providers: [RevenuesService],
-  controllers: [RevenuesController]
+  controllers: [RevenuesController],
 })
 export class RevenuesModule {}

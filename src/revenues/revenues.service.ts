@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, UpdateResult } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { RevenueDto } from 'src/revenues/dto/RevenueDto';
 import { Revenue } from './entities/revenue.entity';
 import { Repository } from 'typeorm';
@@ -24,8 +24,13 @@ export class RevenuesService {
     private userService: UserService,
   ) {}
 
-  async getAll(): Promise<Revenue[]> {
-    let revenues = await this.revenuesRepository.find();
+  async getAll(userId: string): Promise<Revenue[]> {
+    const user = await this.userService.getUser(userId)
+
+    if (!user) {
+      throw new UnauthorizedException()
+    }
+    const revenues = await this.revenuesRepository.findBy({user: user});
 
     if (!revenues) {
       throw new NotFoundException();
